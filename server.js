@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express'), cors = require('cors'), helmet = require('helmet'), rateLimit = require('express-rate-limit');
 const { createClient } = require('@libsql/client'); // Turso (free cloud SQLite). Without TURSO_URL it uses a local file.
 const bcrypt = require('bcryptjs'), jwt = require('jsonwebtoken'), path = require('path'), crypto = require('crypto');
-const { CATS, META } = require('./config');
+//const { CATS, META } = require('./config');
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.JWT_SECRET || (console.warn('⚠  JWT_SECRET missing: using a temporary one (logins reset on restart)'), crypto.randomBytes(32).toString('hex'));
