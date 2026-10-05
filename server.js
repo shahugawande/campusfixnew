@@ -64,7 +64,8 @@ const app = express();
 app.use(cors());
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: { useDefaults: true, directives: { 'upgrade-insecure-requests': null } } }));
 app.use(express.json({ limit: '4mb' })); // read JSON request bodies (needed for login / register)
-app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get(['/app.js', '/style.css', '/config.js'], (req, res) => res.sendFile(path.join(__dirname, req.path)));
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 40, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many attempts. Try again in 15 minutes.' } }));
 
 app.get('/api/health', (req, res) => res.json({ ok: true, time: now() })); // also used by the free uptime pinger
