@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.onrender.campusfixnew.twa",
+        "sha256_cert_fingerprints": ["8C:13:0F:D4:52:A8:9F:2E:C3:1F:CE:CB:34:45:4C:DD:C2:49:49:00:1D:ED:7E:0A:79:66:0B:4F:A7:55:A8:F3"]
+      }
+    }]
