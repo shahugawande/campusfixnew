@@ -67,6 +67,7 @@ app.use(express.json({ limit: '4mb' })); // read JSON request bodies (needed for
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get(['/app.js', '/style.css', '/config.js', '/manifest.json', '/service-worker.js'], (req, res) => res.sendFile(path.join(__dirname, req.path)));
 app.use('/icons', express.static(path.join(__dirname, 'icons')));
+app.use('/.well-known', express.static(path.join(__dirname, '.well-known'), { dotfiles: 'allow' }));
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 40, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many attempts. Try again in 15 minutes.' } }));
 
 app.get('/api/health', (req, res) => res.json({ ok: true, time: now() })); // also used by the free uptime pinger
