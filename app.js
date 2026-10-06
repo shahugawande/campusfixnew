@@ -73,16 +73,24 @@ async function draw() {
 // ---------- report ----------
 function vReport() {
   const cs = M.cats;
-  $('#v').innerHTML = `<div class="c g"><h2>Report an issue</h2><p class="mu">College campus issues only. Similar open reports are merged automatically.</p>
-  <label>What is it about?</label><div class="cg">${Object.entries(cs).map(([k, c]) => `<div class="cat ${rep.cat === k ? 'on' : ''}" data-cat="${k}"><span>${c.icon}</span>${E(c.label)}</div>`).join('')}</div>
-  ${rep.cat ? `${cs[rep.cat].conf ? '<div class="warn">🔒 Confidential: only you and the college administration can see this complaint.' + (cs[rep.cat].forceAnon ? ' Your identity stays hidden.' : '') + '</div>' : ''}
-  <label>Specific problem</label><div class="chips" id="subs">${cs[rep.cat].subs.map(s => `<span class="chip ${rep.sub === s ? 'on' : ''}" data-sub="${E(s)}">${E(s)}</span>`).join('')}</div>
+  if (!cs[rep.cat]) rep.cat = null;
+  window.scrollTo(0, 0);
+  if (!rep.cat) {
+    rep.photo = null;
+    $('#v').innerHTML = `<div class="c g"><h2>Report an issue</h2><p class="mu">College campus issues only. Similar open reports are merged automatically.</p>
+    <label>What is it about?</label><div class="cg">${Object.entries(cs).map(([k, c]) => `<div class="cat" data-cat="${k}"><span>${c.icon}</span>${E(c.label)}</div>`).join('')}</div></div>`;
+    return;
+  }
+  const c = cs[rep.cat];
+  $('#v').innerHTML = `<div class="c g"><button class="btn s o" data-cat="none">← Back</button><h2>${c.icon} ${E(c.label)}</h2>
+  ${c.conf ? '<div class="warn">🔒 Confidential: only you and the college administration can see this complaint.' + (c.forceAnon ? ' Your identity stays hidden.' : '') + '</div>' : ''}
+  <label>Specific problem</label><div class="chips" id="subs">${c.subs.map(s => `<span class="chip ${rep.sub === s ? 'on' : ''}" data-sub="${E(s)}">${E(s)}</span>`).join('')}</div>
   <div class="row"><div><label>Location</label><select id="bld">${opts(M.buildings)}</select></div><div><label>Room / spot</label><input id="room" maxlength="60" placeholder="e.g. Room 304, Lab 2, Counter 1"></div></div>
   <label>Details</label><textarea id="det" maxlength="600" placeholder="Describe the problem..."></textarea>
   <label>Priority</label><div class="chips" id="pri">${['Normal', 'Urgent'].map(p => `<span class="chip ${rep.pri === p ? 'on' : ''}" data-pri="${p}">${p === 'Urgent' ? '🚨 Urgent' : 'Normal'}</span>`).join('')}</div>
   <label>Photo (optional)</label><input type="file" id="ph" accept="image/*">
-  <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:14px;color:var(--tx)"><input type="checkbox" id="anon" style="width:auto" ${cs[rep.cat].forceAnon ? 'checked disabled' : ''}> Report anonymously (admins will not see my name)</label>
-  <p><button class="btn" id="go" style="width:100%">Submit report</button></p>` : ''}</div>`;
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:14px;color:var(--tx)"><input type="checkbox" id="anon" style="width:auto" ${c.forceAnon ? 'checked disabled' : ''}> Report anonymously (admins will not see my name)</label>
+  <p><button class="btn" id="go" style="width:100%">Submit report</button></p></div>`;
 }
 async function submitReport() {
   if (!rep.cat || !rep.sub) return toast('Choose the category and the specific problem');
