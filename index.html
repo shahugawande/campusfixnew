@@ -1,5 +1,32 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>CampusFix</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="stylesheet" href="style.css"></head>
-<body><div id="app"></div><div id="md"></div><script src="config.js"></script><script src="app.js"></script></body></html>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e5fb8">
+<link rel="icon" href="/icons/favicon-48.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+#splash{position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease,visibility .5s}
+#splash.hide{opacity:0;visibility:hidden}
+#splash img{width:min(70vw,320px);height:auto;animation:sp-in .9s cubic-bezier(.2,.8,.2,1) both,sp-pulse 2s ease-in-out .9s infinite}
+#splash .bar{width:min(50vw,200px);height:4px;border-radius:4px;background:#e3ecf9;margin-top:18px;overflow:hidden}
+#splash .bar i{display:block;height:100%;width:40%;border-radius:4px;background:linear-gradient(90deg,#1e5fb8,#3b9bff);animation:sp-bar 1.1s ease-in-out infinite}
+@keyframes sp-in{from{opacity:0;transform:scale(.7) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes sp-pulse{50%{transform:scale(1.04)}}
+@keyframes sp-bar{0%{margin-left:-40%}100%{margin-left:100%}}
+</style></head>
+<body><div id="splash"><img src="/icons/logo.png" alt="CampusFix"><div class="bar"><i></i></div></div><div id="app"></div><div id="md"></div><script src="config.js"></script><script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js');
+}
+window.addEventListener('load', function () {
+  var s = document.getElementById('splash');
+  setTimeout(function () {
+    s.classList.add('hide');
+    setTimeout(function () { s.remove(); }, 600);
+  }, 1600);
+});
+</script>
+</body></html>
