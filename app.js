@@ -22,13 +22,17 @@ function ring(p, sz = 92, col = 'var(--pr)') {
   return `<div class="rg" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="rb"/><circle cx="${sz / 2}" cy="${sz / 2}" r="${r}" class="rf" style="stroke:${col};stroke-dasharray:${c};stroke-dashoffset:${c}" data-off="${c * (1 - p / 100)}"/></svg><b style="font-size:${sz / 4.4}px">${p}%</b></div>`;
 }
 const anim = () => requestAnimationFrame(() => document.querySelectorAll('.rf').forEach(e => e.style.strokeDashoffset = e.dataset.off));
-function compress(f) {
-  return new Promise((res, rej) => { const im = new Image(), u = URL.createObjectURL(f); im.onload = () => { const k = Math.min(1, 800 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', .7)); }; im.onerror = rej; im.src = u; });
+function compress(f) { // FileReader (data: URL) works under the server's security rules, unlike blob: URLs
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => { const im = new Image(); im.onload = () => { const k = Math.min(1, 800 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', .7)); }; im.onerror = rej; im.src = fr.result; };
+    fr.onerror = rej; fr.readAsDataURL(f);
+  });
 }
 const opts = a => a.map(x => `<option>${E(x)}</option>`).join('');
 
 // ---------- auth ----------
-function logout() { localStorage.removeItem('cf_t'); T = null; U = null; authScreen(); }
+function logout() { clearInterval(window._np); localStorage.removeItem('cf_t'); T = null; U = null; authScreen(); }
 function authScreen() {
   const s = role === 'student', reg = mode === 'reg';
   $('#app').innerHTML = `<div class="auth g"><div class="logo big">🏫 Campus<b>Fix</b></div><p class="mu" style="text-align:center">College issue reporting platform</p>
@@ -61,9 +65,9 @@ document.addEventListener('submit', async e => {
 function shell() {
   const adm = U.role === 'admin', tabs = adm ? [['console', '🛠 Console'], ['stats', '📊 Analytics']] : [['report', '➕ Report'], ['feed', '🧭 Explore'], ['mine', '👤 My reports'], ['stats', '📊 Dashboard'], ['rank', '🏆 Rank']];
   if (!tabs.some(t => t[0] === tab)) tab = tabs[0][0];
-  $('#app').innerHTML = `<header class="g"><div class="logo">🏫 Campus<b>Fix</b></div><div class="who"><b>${E(U.name)}</b><span class="mu">${adm ? E(U.dept) + ' · Admin' : E(U.year) + ' · ' + E(U.branch) + ' · Div ' + E(U.division)}</span></div><button class="ib" id="th">🌓</button><button class="ib" id="lo" title="Sign out">⎋</button></header>
+  $('#app').innerHTML = `<header class="g"><div class="logo">🏫 Campus<b>Fix</b></div><div class="who"><b>${E(U.name)}</b><span class="mu">${adm ? E(U.dept) + ' · Admin' : E(U.year) + ' · ' + E(U.branch) + ' · Div ' + E(U.division)}</span></div><button class="ib" id="bell" title="Notifications" style="position:relative">🔔<i id="bd" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font:700 10px/16px system-ui;min-width:16px;padding:0 3px;border-radius:9px;text-align:center;font-style:normal"></i></button><button class="ib" id="th">🌓</button><button class="ib" id="lo" title="Sign out">⎋</button></header>
   <nav class="g">${tabs.map(([k, n]) => `<button data-t="${k}" class="${k === tab ? 'on' : ''}">${n}</button>`).join('')}</nav><main id="v"></main>`;
-  draw();
+  draw(); startNotif();
 }
 async function draw() {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
@@ -165,6 +169,28 @@ async function openIssue(id) {
   if (adm) $('#us').value = i.status; anim();
 }
 
+// ---------- notifications ----------
+let nLast = null;
+async function pollNotif() {
+  if (!U) return;
+  try {
+    const r = await api('/notifications'), b = $('#bd');
+    if (b) { b.textContent = r.unread > 9 ? '9+' : r.unread; b.style.display = r.unread ? 'block' : 'none'; }
+    if (nLast !== null && r.unread > nLast && r.items[0]) {
+      toast('🔔 ' + r.items[0].msg);
+      if ('Notification' in window && Notification.permission === 'granted') new Notification('CampusFix', { body: r.items[0].msg });
+    }
+    nLast = r.unread;
+  } catch (e) { /* ignore network hiccups */ }
+}
+function startNotif() { clearInterval(window._np); nLast = null; pollNotif(); window._np = setInterval(pollNotif, 20000); }
+async function openNotifs() {
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+  const r = await api('/notifications');
+  $('#md').innerHTML = `<div class="back" data-close><div class="sheet g"><h2>🔔 Notifications</h2>${r.items.map(n => `<div class="c g hv" data-open="${n.issue_id}"><b>${E(n.msg)}</b><div class="mu">${ago(now() - n.ts)} ago${n.seen ? '' : ' · NEW'}</div></div>`).join('') || '<p class="mu">No notifications yet.</p>'}<p><button class="btn o" data-close style="width:100%">Close</button></p></div></div>`;
+  await api('/notifications/read', { method: 'POST', body: {} }); nLast = 0; pollNotif();
+}
+
 // ---------- events ----------
 document.addEventListener('click', async e => {
   const t = e.target, d = t.closest('[data-role],[data-t],[data-cat],[data-sub],[data-pri],[data-vote],[data-open],[data-rate],[data-close]') || t;
@@ -173,6 +199,7 @@ document.addEventListener('click', async e => {
     else if (t.id === 'sw') { mode = mode === 'login' ? 'reg' : 'login'; authScreen(); }
     else if (d.dataset?.t) { tab = d.dataset.t; draw(); }
     else if (t.id === 'th') { const r = document.documentElement; r.dataset.theme = (r.dataset.theme || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light')) === 'dark' ? 'light' : 'dark'; }
+    else if (t.closest('#bell')) await openNotifs();
     else if (t.id === 'lo') logout();
     else if (d.dataset?.cat) { rep.cat = d.dataset.cat; rep.sub = null; vReport(); }
     else if (d.dataset?.sub) { rep.sub = d.dataset.sub; document.querySelectorAll('#subs .chip').forEach(x => x.classList.toggle('on', x === d)); }
@@ -198,7 +225,7 @@ document.addEventListener('input', e => {
 document.addEventListener('change', async e => {
   const t = e.target;
   if (t.id === 'fs') { F.status = t.value; draw(); } else if (t.id === 'fc') { F.category = t.value; draw(); } else if (t.id === 'fd') { F.dept = t.value; draw(); }
-  else if (t.id === 'ph' && t.files[0]) { try { rep.photo = await compress(t.files[0]); toast('Photo attached 📷'); } catch (x) { toast('Could not read photo'); } }
+  else if (t.id === 'ph' && t.files[0]) { try { rep.photo = await compress(t.files[0]); toast('Photo attached 📷'); } catch (x) { toast('Could not read this photo. Please use a JPG or PNG image.'); } }
 });
 addEventListener('keydown', e => { if (e.key === 'Escape') $('#md').innerHTML = ''; });
 setInterval(() => { if (U && !$('#md').firstChild && tab !== 'report' && !document.activeElement?.matches('input,textarea,select')) draw(); }, 25000);

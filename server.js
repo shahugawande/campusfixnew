@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS votes(issue_id INTEGER REFERENCES issues(id) ON DELET
 CREATE TABLE IF NOT EXISTS hist(id INTEGER PRIMARY KEY, issue_id INTEGER REFERENCES issues(id) ON DELETE CASCADE, status TEXT, note TEXT, actor TEXT, ts INTEGER);
 CREATE TABLE IF NOT EXISTS comments(id INTEGER PRIMARY KEY, issue_id INTEGER REFERENCES issues(id) ON DELETE CASCADE, user_id INTEGER, name TEXT, role TEXT, body TEXT, ts INTEGER);
 CREATE TABLE IF NOT EXISTS photos(token TEXT PRIMARY KEY, issue_id INTEGER, kind TEXT, mime TEXT, data TEXT);
+CREATE TABLE IF NOT EXISTS notifications(id INTEGER PRIMARY KEY, user_id INTEGER, issue_id INTEGER, msg TEXT, ts INTEGER, seen INTEGER DEFAULT 0);
+CREATE INDEX IF NOT EXISTS ix_notif ON notifications(user_id, seen);
 CREATE INDEX IF NOT EXISTS ix_issue ON issues(status, category);`;
 const INS_USER = 'INSERT INTO users(role,login,name,hash,year,branch,division,incharge,dept,created) VALUES(?,?,?,?,?,?,?,?,?,?)';
 const INS_HIST = 'INSERT INTO hist(issue_id,status,note,actor,ts) VALUES(?,?,?,?,?)';
@@ -57,12 +59,20 @@ const fmt = (r, u) => ({
   rating: r.rating, created: r.created, fixed: r.fixed, votes: r.votes ?? 0, voted: !!r.voted, mine: r.user_id === u.id,
   reporter: u.role === 'admin' && !r.anon ? { name: r.uname, prn: r.ulogin, year: r.uyear, branch: r.ubranch, division: r.udiv, incharge: r.uinc } : null
 });
+const MAX_PER_DAY = +process.env.MAX_REPORTS_PER_DAY || 10; // anti-spam: reports one student can file per 24 hours
+const code = id => 'CF-' + String(id).padStart(4, '0');
+const notify = (uid, iid, msg) => run('INSERT INTO notifications(user_id,issue_id,msg,ts,seen) VALUES(?,?,?,?,0)', [uid, iid, msg, now()]);
+async function notifyAdmins(cat, iid, msg) { // admins of the matching department (or all admins if that department has none)
+  let a = await all("SELECT id FROM users WHERE role='admin' AND dept=?", [CATS[cat].dept]);
+  if (!a.length) a = await all("SELECT id FROM users WHERE role='admin'");
+  for (const u of a) await notify(u.id, iid, msg);
+}
 const canSee = (r, u) => u.role === 'admin' || !r.conf || r.user_id === u.id;
 
 // ---------- app ----------
 const app = express();
 app.use(cors());
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: { useDefaults: true, directives: { 'upgrade-insecure-requests': null, 'script-src': ["'self'", "'unsafe-inline'"] } } }));
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: { useDefaults: true, directives: { 'upgrade-insecure-requests': null, 'script-src': ["'self'", "'unsafe-inline'"], 'img-src': ["'self'", 'data:', 'blob:'] } } }));
 app.use(express.json({ limit: '4mb' })); // read JSON request bodies (needed for login / register)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get(['/app.js', '/style.css', '/config.js', '/manifest.json', '/service-worker.js'], (req, res) => res.sendFile(path.join(__dirname, req.path)));
@@ -122,10 +132,13 @@ app.post('/api/issues', auth(['student']), h(async (req, res) => {
     const d = await get("SELECT id FROM issues WHERE status!='Fixed' AND conf=0 AND category=? AND sub=? AND building=? AND lower(room)=lower(?)", [b.category, sub, b.building, room]);
     if (d) { await run('INSERT OR IGNORE INTO votes VALUES(?,?)', [d.id, req.u.id]); return res.json({ duplicate: true, id: d.id }); }
   }
+  const n = (await get('SELECT COUNT(*) c FROM issues WHERE user_id=? AND created>?', [req.u.id, now() - 864e5])).c;
+  if (n >= MAX_PER_DAY) return bad(res, `Daily limit reached: ${MAX_PER_DAY} reports in 24 hours. Please try again tomorrow.`, 429);
   const r = await run('INSERT INTO issues(user_id,category,sub,building,room,details,priority,anon,conf,created) VALUES(?,?,?,?,?,?,?,?,?,?)',
     [req.u.id, b.category, sub, b.building, room, details, pri, anon, c.conf ? 1 : 0, now()]);
   await run(INS_HIST, [r.lastInsertRowid, 'Reported', 'Complaint submitted', anon ? 'Anonymous student' : req.u.name, now()]);
   await storePhoto(r.lastInsertRowid, 'before', b.photo);
+  await notifyAdmins(b.category, r.lastInsertRowid, `${pri === 'Urgent' ? '🚨 Urgent: ' : '🆕 '}New ${c.label} complaint ${code(r.lastInsertRowid)} at ${b.building}`);
   res.json({ id: r.lastInsertRowid });
 }));
 app.get('/api/issues', auth(), h(async (req, res) => {
@@ -151,7 +164,10 @@ app.post('/api/issues/:id/comments', auth(), h(async (req, res) => {
   const r = await get('SELECT * FROM issues WHERE id=?', [idOf(req.params.id)]), t = str(req.body?.body, 500);
   if (!r || !canSee(r, req.u)) return bad(res, 'Not found', 404); if (!t) return bad(res, 'Write a message');
   const name = req.u.role === 'admin' ? `${req.u.name} · ${req.u.dept}` : (r.anon && r.user_id === req.u.id ? 'Anonymous student' : req.u.name);
-  await run('INSERT INTO comments(issue_id,user_id,name,role,body,ts) VALUES(?,?,?,?,?,?)', [r.id, req.u.id, name, req.u.role, t, now()]); res.json({ ok: true });
+  await run('INSERT INTO comments(issue_id,user_id,name,role,body,ts) VALUES(?,?,?,?,?,?)', [r.id, req.u.id, name, req.u.role, t, now()]);
+  if (req.u.role === 'admin') { if (r.user_id !== req.u.id) await notify(r.user_id, r.id, `💬 New message on ${code(r.id)} from ${req.u.dept}`); }
+  else await notifyAdmins(r.category, r.id, `💬 New student message on ${code(r.id)}`);
+  res.json({ ok: true });
 }));
 app.post('/api/issues/:id/rate', auth(['student']), h(async (req, res) => {
   const n = +req.body?.rating, r = await get('SELECT * FROM issues WHERE id=?', [idOf(req.params.id)]);
@@ -165,8 +181,20 @@ app.patch('/api/issues/:id', auth(['admin']), h(async (req, res) => {
     'assigned' in b ? str(b.assigned, 60) || null : r.assigned ?? null, 'eta' in b ? str(b.eta, 10) || null : r.eta ?? null, st === 'Fixed' ? (r.fixed || now()) : null, id]);
   if (b.after) await storePhoto(id, 'after', b.after);
   if (st !== r.status || b.note) await run(INS_HIST, [id, st, str(b.note, 200), `${req.u.name} (${req.u.dept})`, now()]);
+  const note = str(b.note, 120), team = 'assigned' in b ? str(b.assigned, 60) : r.assigned, c0 = code(id);
+  const MSG = { Reported: `${c0} was moved back to Reported.`, Assigned: `📌 ${c0} has been assigned${team ? ' to ' + team : ''}.`, 'In Progress': `🔧 Good news: work on ${c0} is now in progress.`, Fixed: `✅ ${c0} has been resolved. Please rate the fix.` };
+  if (st !== r.status) await notify(r.user_id, id, MSG[st] + (note ? ` Note: ${note}` : ''));
+  else if (note) await notify(r.user_id, id, `📝 Update on ${c0}: ${note}`);
   res.json({ ok: true });
 }));
+
+// ----- notifications -----
+app.get('/api/notifications', auth(), h(async (req, res) => {
+  const items = await all('SELECT id,issue_id,msg,ts,seen FROM notifications WHERE user_id=? ORDER BY ts DESC LIMIT 30', [req.u.id]);
+  const c = await get('SELECT COUNT(*) c FROM notifications WHERE user_id=? AND seen=0', [req.u.id]);
+  res.json({ items, unread: c.c });
+}));
+app.post('/api/notifications/read', auth(), h(async (req, res) => { await run('UPDATE notifications SET seen=1 WHERE user_id=?', [req.u.id]); res.json({ ok: true }); }));
 
 // ----- analytics -----
 app.get('/api/stats', auth(), h(async (req, res) => {
