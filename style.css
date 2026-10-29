@@ -58,3 +58,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 
 .btn{border-radius:10px}
 .cat span svg{width:30px;height:30px;display:block;margin:2px auto 8px;color:var(--pr)}
 body,.g,input,select,textarea{transition:background-color .2s ease,color .2s ease,border-color .2s ease}
+svg rect[fill="#7c6cff"]{fill:var(--pr)}
+.logo{color:#191970}
+.logo b{color:var(--ac)}
+:root[data-theme=dark] .logo{color:var(--tx)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .logo{color:var(--tx)}}
