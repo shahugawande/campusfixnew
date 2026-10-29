@@ -57,3 +57,4 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 
 .auth a{color:var(--ac)}
 .c{border-radius:14px}
 .btn{border-radius:10px}
+.cat span svg{width:30px;height:30px;display:block;margin:2px auto 8px;color:var(--pr)}
