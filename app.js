@@ -93,6 +93,29 @@ function compress(f) { // FileReader (data: URL) works under the server's securi
 const opts = a => a.map(x => `<option>${E(x)}</option>`).join('');
 
 // ---------- auth ----------
+const CONTACT = 'campusfix.support@gmail.com';
+function showLegal(w) {
+  const h = '<h3 style="margin-top:14px">', p = w === 'privacy';
+  const body = p ? `<h2>Privacy Policy</h2><p class="mu">Last updated: October 2026</p>
+  ${h}What we collect</h3><p>Students: name, PRN, year, branch, division, class incharge and password. Admins: name, user ID, department and password. We also keep the complaints you submit (category, location, details, optional photos), your comments and your notifications.</p>
+  ${h}Why we collect it</h3><p>Only to run CampusFix: to log you in, send your complaint to the right department, show its progress and notify you about it.</p>
+  ${h}Who can see it</h3><p>If you report anonymously, admins will not see your name. Confidential categories (such as Teaching Staff and Bullying / Ragging) are visible only to you and the college administration. Other reports can be seen by other CampusFix users, so do not write phone numbers or other private details in the description.</p>
+  ${h}Where it is stored</h3><p>Your data is stored on cloud services used to run this app (database and hosting). We do not sell your data and we do not show ads.</p>
+  ${h}How long we keep it</h3><p>While your account is active. You can ask us to delete it at any time.</p>
+  ${h}Your choices</h3><p>You can ask us to correct or delete your data, or ask any privacy question, by email: <b>${E(CONTACT)}</b></p>
+  ${h}Under 18?</h3><p>If you are under 18, please use CampusFix with the knowledge of your parent or guardian.</p>
+  ${h}Changes</h3><p>If we change this policy, the date above will change.</p>`
+  : `<h2>Terms of Use</h2><p class="mu">Last updated: October 2026</p>
+  ${h}1. Use it for real campus issues</h3><p>CampusFix is only for reporting genuine college issues.</p>
+  ${h}2. Be truthful and respectful</h3><p>Do not post false reports, abuse, spam, or any illegal or inappropriate photos or messages.</p>
+  ${h}3. Your account</h3><p>Keep your password private. You are responsible for everything done from your account.</p>
+  ${h}4. Admin rights</h3><p>Admins may update, merge or remove reports that break these terms, and may suspend accounts that misuse CampusFix.</p>
+  ${h}5. Fix times</h3><p>The fix times (SLA) shown in the app are targets, not guarantees.</p>
+  ${h}6. Emergencies</h3><p>For fire, medical emergencies or any threat to safety, contact college security or emergency services directly. Do not wait for this app.</p>
+  ${h}7. Availability</h3><p>CampusFix is provided as it is and may sometimes be unavailable.</p>
+  ${h}8. Changes and contact</h3><p>We may update these terms. Questions: <b>${E(CONTACT)}</b></p>`;
+  $('#md').innerHTML = `<div class="back" data-close role="dialog" aria-modal="true"><div class="sheet g">${body}<p><button class="btn" data-close style="width:100%">Close</button></p></div></div>`;
+}
 function logout() { clearInterval(window._np); localStorage.removeItem('cf_t'); T = null; U = null; authScreen(); }
 function confirmLogout() {
   $('#md').innerHTML = `<div class="back" data-close role="dialog" aria-modal="true" aria-labelledby="lgt"><div class="sheet g" style="max-width:380px"><h2 id="lgt">Confirm Logout</h2><p class="mu">Are you sure you want to log out?</p><div class="row" style="flex-wrap:nowrap;margin-top:16px"><button class="btn o" data-close>Cancel</button><button class="btn" id="lgo">Logout</button></div></div></div>`;
