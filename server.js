@@ -71,6 +71,7 @@ const canSee = (r, u) => u.role === 'admin' || !r.conf || r.user_id === u.id;
 
 // ---------- app ----------
 const app = express();
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' }, contentSecurityPolicy: { useDefaults: true, directives: { 'upgrade-insecure-requests': null, 'script-src': ["'self'", "'unsafe-inline'"], 'img-src': ["'self'", 'data:', 'blob:'] } } }));
 app.use(express.json({ limit: '4mb' })); // read JSON request bodies (needed for login / register)
