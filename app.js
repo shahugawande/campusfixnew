@@ -133,8 +133,10 @@ function authScreen() {
   ${reg && !s ? `<label>Department</label><select name="dept">${opts(M.depts)}</select><label>Admin invite code</label><input name="invite" required placeholder="Given by the college administration">` : ''}
   <label>Password</label><input name="password" type="password" required minlength="8" autocomplete="${reg ? 'new-password' : 'current-password'}" placeholder="${reg ? 'Set a password (min 8 characters)' : 'Enter your password'}">
   ${reg ? '<label>Confirm password</label><input name="password2" type="password" required minlength="8">' : ''}
+    ${reg ? '<label style="display:flex;gap:8px;align-items:flex-start;text-transform:none;font-size:13px;letter-spacing:0;color:var(--tx)"><input type="checkbox" name="agree" required style="width:auto;margin-top:3px"><span>I agree to the <a data-legal="privacy">Privacy Policy</a> and <a data-legal="terms">Terms of Use</a></span></label>' : ''}
   <button class="btn" style="width:100%;margin-top:18px">${reg ? 'Create account' : 'Sign in'}</button></form>
-  <p class="mu" style="text-align:center;margin-top:14px">${reg ? 'Already have an account?' : 'New here?'} <a id="sw">${reg ? 'Sign in' : 'Create your account'}</a></p></div>`;
+    <p class="mu" style="text-align:center;margin-top:14px">${reg ? 'Already have an account?' : 'New here?'} <a id="sw">${reg ? 'Sign in' : 'Create your account'}</a></p>
+  <p class="mu" style="text-align:center;font-size:12px"><a data-legal="privacy">Privacy Policy</a> · <a data-legal="terms">Terms</a></p></div>`;
 }
 document.addEventListener('submit', async e => {
   if (e.target.id !== 'af') return; e.preventDefault();
@@ -284,6 +286,7 @@ document.addEventListener('click', async e => {
   const t = e.target, d = t.closest('[data-role],[data-t],[data-cat],[data-sub],[data-pri],[data-vote],[data-open],[data-rate],[data-close]') || t;
   try {
     if (d.dataset?.role) { role = d.dataset.role; authScreen(); }
+          else if (t.dataset?.legal) { e.preventDefault(); showLegal(t.dataset.legal); }
     else if (t.id === 'sw') { mode = mode === 'login' ? 'reg' : 'login'; authScreen(); }
     else if (d.dataset?.t) { tab = d.dataset.t; draw(); }
         else if (t.closest('#th')) { const n = curTheme() === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('cf_theme', n); } catch (x) { /* ignore */ } $('#th span').innerHTML = ic('theme'); }
