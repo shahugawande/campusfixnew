@@ -264,6 +264,7 @@ setInterval(() => { if (U && !$('#md').firstChild && tab !== 'report' && !docume
 
 (async () => {
   try { M = await api('/meta'); } catch (e) { return $('#app').innerHTML = `<div class="auth g"><h2>Cannot reach the backend</h2><p class="mu">Start the backend (<code>npm start</code>) and check <code>CF_API</code> in config.js. Current URL: <b>${E(API || location.origin)}</b></p></div>`; }
+    Object.keys(M.cats).forEach(k => M.cats[k].icon = ic(CI[k] || 'dot', 20));
   if (T) try { U = (await api('/me')).user; } catch (e) { T = null; }
   U ? shell() : authScreen();
 })();
