@@ -38,7 +38,7 @@ const ST = ['Reported', 'Assigned', 'In Progress', 'Fixed'], now = () => Date.no
 let T = localStorage.getItem('cf_t'), U = null, M = null, tab = '', role = 'student', mode = 'login', rep = { cat: null, sub: null, pri: 'Normal', photo: null };
 let F = { status: '', category: '', q: '', dept: false };
 
-const toast = m => { const t = document.createElement('div'); t.className = 'toast g'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 3500); };
+const toast = m => { const t = document.createElement('div'); t.className = 'toast g'; t.textContent = String(m).replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '').trim(); document.body.appendChild(t); setTimeout(() => t.remove(), 3500); };
 async function api(p, o = {}) {
   const r = await fetch(API + '/api' + p, { method: o.method || (o.body ? 'POST' : 'GET'), headers: { 'Content-Type': 'application/json', ...(T ? { Authorization: 'Bearer ' + T } : {}) }, body: o.body ? JSON.stringify(o.body) : undefined });
   const j = await r.json().catch(() => ({}));
