@@ -94,6 +94,10 @@ const opts = a => a.map(x => `<option>${E(x)}</option>`).join('');
 
 // ---------- auth ----------
 function logout() { clearInterval(window._np); localStorage.removeItem('cf_t'); T = null; U = null; authScreen(); }
+function confirmLogout() {
+  $('#md').innerHTML = `<div class="back" data-close role="dialog" aria-modal="true" aria-labelledby="lgt"><div class="sheet g" style="max-width:380px"><h2 id="lgt">Confirm Logout</h2><p class="mu">Are you sure you want to log out?</p><div class="row" style="flex-wrap:nowrap;margin-top:16px"><button class="btn o" data-close>Cancel</button><button class="btn" id="lgo">Logout</button></div></div></div>`;
+  $('#lgo').focus();
+}
 function authScreen() {
   const s = role === 'student', reg = mode === 'reg';
     $('#app').innerHTML = `<div class="auth g"><div class="logo big"><span style="color:var(--pr)">${ic('wrench', 30)}</span> Campus<b>Fix</b></div><p class="mu" style="text-align:center">College issue reporting platform</p>
@@ -261,7 +265,8 @@ document.addEventListener('click', async e => {
     else if (d.dataset?.t) { tab = d.dataset.t; draw(); }
         else if (t.closest('#th')) { const n = curTheme() === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('cf_theme', n); } catch (x) { /* ignore */ } $('#th span').innerHTML = ic('theme'); }
     else if (t.closest('#bell')) await openNotifs();
-    else if (t.id === 'lo') logout();
+        else if (t.id === 'lo') confirmLogout();
+    else if (t.id === 'lgo') { t.disabled = true; $('#md').innerHTML = ''; logout(); }
     else if (d.dataset?.cat) { rep.cat = d.dataset.cat; rep.sub = null; vReport(); }
     else if (d.dataset?.sub) { rep.sub = d.dataset.sub; document.querySelectorAll('#subs .chip').forEach(x => x.classList.toggle('on', x === d)); }
     else if (d.dataset?.pri) { rep.pri = d.dataset.pri; document.querySelectorAll('#pri .chip').forEach(x => x.classList.toggle('on', x === d)); }
