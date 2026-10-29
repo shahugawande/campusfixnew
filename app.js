@@ -9,6 +9,12 @@ const IC = {
   gear: '<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>'
 };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px">${IC[n]}</svg>`;
+Object.assign(IC, {
+  wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  theme: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',
+  out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
+});
 const $ = (s, r = document) => r.querySelector(s);
 const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const API = (window.CF_API || '').replace(/\/$/, ''); // backend URL, set in config.js
@@ -45,7 +51,7 @@ const opts = a => a.map(x => `<option>${E(x)}</option>`).join('');
 function logout() { clearInterval(window._np); localStorage.removeItem('cf_t'); T = null; U = null; authScreen(); }
 function authScreen() {
   const s = role === 'student', reg = mode === 'reg';
-  $('#app').innerHTML = `<div class="auth g"><div class="logo big">🏫 Campus<b>Fix</b></div><p class="mu" style="text-align:center">College issue reporting platform</p>
+    $('#app').innerHTML = `<div class="auth g"><div class="logo big"><span style="color:var(--pr)">${ic('wrench', 30)}</span> Campus<b>Fix</b></div><p class="mu" style="text-align:center">College issue reporting platform</p>
   <div class="seg"><button data-role="student" class="${s ? 'on' : ''}">🎓 Student</button><button data-role="admin" class="${!s ? 'on' : ''}">🛠 Admin</button></div>
   <form id="af" autocomplete="on">
   ${reg ? '<label>Full name</label><input name="name" required maxlength="60">' : ''}
@@ -75,7 +81,7 @@ document.addEventListener('submit', async e => {
 function shell() {
   const adm = U.role === 'admin', tabs = adm ? [['console', ic('gear') + ' Console'], ['stats', ic('chart') + ' Analytics']] : [['report', ic('plus') + ' Report'], ['feed', ic('compass') + ' Explore'], ['mine', ic('list') + ' My reports'], ['stats', ic('dash') + ' Dashboard'], ['rank', ic('trophy') + ' Rank']];
   if (!tabs.some(t => t[0] === tab)) tab = tabs[0][0];
-  $('#app').innerHTML = `<header class="g"><div class="logo">🏫 Campus<b>Fix</b></div><div class="who"><b>${E(U.name)}</b><span class="mu">${adm ? E(U.dept) + ' · Admin' : E(U.year) + ' · ' + E(U.branch) + ' · Div ' + E(U.division)}</span></div><button class="ib" id="bell" title="Notifications" style="position:relative">🔔<i id="bd" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font:700 10px/16px system-ui;min-width:16px;padding:0 3px;border-radius:9px;text-align:center;font-style:normal"></i></button><button class="ib" id="th">🌓</button><button class="ib" id="lo" title="Sign out">⎋</button></header>
+    $('#app').innerHTML = `<header class="g"><div class="logo"><span style="color:var(--pr)">${ic('wrench', 20)}</span> Campus<b>Fix</b></div><div class="who"><b>${E(U.name)}</b><span class="mu">${adm ? E(U.dept) + ' · Admin' : E(U.year) + ' · ' + E(U.branch) + ' · Div ' + E(U.division)}</span></div><button class="ib" id="bell" title="Notifications" style="position:relative">${ic('bell')}<i id="bd" style="display:none;position:absolute;top:-5px;right:-5px;background:var(--er);color:var(--onp);font:700 10px/16px system-ui;min-width:16px;padding:0 3px;border-radius:9px;text-align:center;font-style:normal"></i></button><button class="ib" id="th" title="Theme"><span style="pointer-events:none;display:grid">${ic('theme')}</span></button><button class="ib" id="lo" title="Sign out"><span style="pointer-events:none;display:grid">${ic('out')}</span></button></header>
   <nav class="g">${tabs.map(([k, n]) => `<button data-t="${k}" class="${k === tab ? 'on' : ''}">${n}</button>`).join('')}</nav><main id="v"></main>`;
   draw(); startNotif();
 }
