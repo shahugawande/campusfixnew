@@ -1,4 +1,14 @@
 'use strict';
+const IC = {
+  plus: '<circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>',
+  compass: '<circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/>',
+  list: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/>',
+  chart: '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>',
+  dash: '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/>',
+  gear: '<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>'
+};
+const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px">${IC[n]}</svg>`;
 const $ = (s, r = document) => r.querySelector(s);
 const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const API = (window.CF_API || '').replace(/\/$/, ''); // backend URL, set in config.js
@@ -63,7 +73,7 @@ document.addEventListener('submit', async e => {
 
 // ---------- shell ----------
 function shell() {
-  const adm = U.role === 'admin', tabs = adm ? [['console', '🛠 Console'], ['stats', '📊 Analytics']] : [['report', '➕ Report'], ['feed', '🧭 Explore'], ['mine', '👤 My reports'], ['stats', '📊 Dashboard'], ['rank', '🏆 Rank']];
+  const adm = U.role === 'admin', tabs = adm ? [['console', ic('gear') + ' Console'], ['stats', ic('chart') + ' Analytics']] : [['report', ic('plus') + ' Report'], ['feed', ic('compass') + ' Explore'], ['mine', ic('list') + ' My reports'], ['stats', ic('dash') + ' Dashboard'], ['rank', ic('trophy') + ' Rank']];
   if (!tabs.some(t => t[0] === tab)) tab = tabs[0][0];
   $('#app').innerHTML = `<header class="g"><div class="logo">🏫 Campus<b>Fix</b></div><div class="who"><b>${E(U.name)}</b><span class="mu">${adm ? E(U.dept) + ' · Admin' : E(U.year) + ' · ' + E(U.branch) + ' · Div ' + E(U.division)}</span></div><button class="ib" id="bell" title="Notifications" style="position:relative">🔔<i id="bd" style="display:none;position:absolute;top:-5px;right:-5px;background:#ef4444;color:#fff;font:700 10px/16px system-ui;min-width:16px;padding:0 3px;border-radius:9px;text-align:center;font-style:normal"></i></button><button class="ib" id="th">🌓</button><button class="ib" id="lo" title="Sign out">⎋</button></header>
   <nav class="g">${tabs.map(([k, n]) => `<button data-t="${k}" class="${k === tab ? 'on' : ''}">${n}</button>`).join('')}</nav><main id="v"></main>`;
