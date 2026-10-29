@@ -25,6 +25,11 @@ Object.assign(IC, {
   dot: '<circle cx="12" cy="12" r="4"/>'
 });
 const CI = { classroom: 'school', seminar: 'mic', lab: 'flask', washroom: 'drop', canteen: 'food', library: 'book', network: 'wifi', accounts: 'rupee', nonteach: 'brief', staff: 'cap', campus: 'pin', bully: 'shield' };
+const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
+const MOON = IC.theme;
+const curTheme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+Object.defineProperty(IC, 'theme', { get: () => curTheme() === 'dark' ? MOON : SUN });
+try { const sv = localStorage.getItem('cf_theme'); if (sv) document.documentElement.dataset.theme = sv; } catch (e) { /* ignore */ }
 Object.assign(IC, {
   lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
@@ -254,7 +259,7 @@ document.addEventListener('click', async e => {
     if (d.dataset?.role) { role = d.dataset.role; authScreen(); }
     else if (t.id === 'sw') { mode = mode === 'login' ? 'reg' : 'login'; authScreen(); }
     else if (d.dataset?.t) { tab = d.dataset.t; draw(); }
-    else if (t.id === 'th') { const r = document.documentElement; r.dataset.theme = (r.dataset.theme || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light')) === 'dark' ? 'light' : 'dark'; }
+        else if (t.closest('#th')) { const n = curTheme() === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('cf_theme', n); } catch (x) { /* ignore */ } $('#th span').innerHTML = ic('theme'); }
     else if (t.closest('#bell')) await openNotifs();
     else if (t.id === 'lo') logout();
     else if (d.dataset?.cat) { rep.cat = d.dataset.cat; rep.sub = null; vReport(); }
