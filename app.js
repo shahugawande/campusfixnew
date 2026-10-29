@@ -26,6 +26,30 @@ Object.assign(IC, {
 });
 const CI = { classroom: 'school', seminar: 'mic', lab: 'flask', washroom: 'drop', canteen: 'food', library: 'book', network: 'wifi', accounts: 'rupee', nonteach: 'brief', staff: 'cap', campus: 'pin', bully: 'shield' };
 Object.assign(IC, {
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  hand: '<path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
+  user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  down: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  check: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'
+});
+const EMO = { '🔒': 'lock', '🚨': 'alert', '🙋': 'hand', '🏆': 'trophy', '👤': 'user', '🕶': 'user', '👷': 'user', '🛠': 'gear', '💬': 'chat', '🔔': 'bell', '⬇': 'down', '✅': 'check', '🥇': '#1', '🥈': '#2', '🥉': '#3', '🎉': '', '🔎': '', '📷': '' };
+const EMR = new RegExp('(' + Object.keys(EMO).join('|') + ')\\uFE0F?', 'g');
+const hasEmo = s => Object.keys(EMO).some(k => s.includes(k));
+function swapEmoji() {
+  if (!document.body) return;
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), hit = [];
+  while (w.nextNode()) if (hasEmo(w.currentNode.nodeValue)) hit.push(w.currentNode);
+  hit.forEach(n => {
+    const s = document.createElement('span');
+    s.innerHTML = E(n.nodeValue).replace(EMR, (m, k) => { const v = EMO[k]; return v === '' ? '' : v[0] === '#' ? v.slice(1) : '<span style="pointer-events:none">' + ic(v, 16) + '</span>'; });
+    n.replaceWith(s);
+  });
+  document.querySelectorAll('[placeholder]').forEach(i => { i.placeholder = i.placeholder.replace('🔎 ', ''); });
+}
+new MutationObserver(swapEmoji).observe(document.documentElement, { childList: true, subtree: true });
+Object.assign(IC, {
   wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
   theme: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',
