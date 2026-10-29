@@ -68,7 +68,7 @@ function logout() { clearInterval(window._np); localStorage.removeItem('cf_t'); 
 function authScreen() {
   const s = role === 'student', reg = mode === 'reg';
     $('#app').innerHTML = `<div class="auth g"><div class="logo big"><span style="color:var(--pr)">${ic('wrench', 30)}</span> Campus<b>Fix</b></div><p class="mu" style="text-align:center">College issue reporting platform</p>
-  <div class="seg"><button data-role="student" class="${s ? 'on' : ''}">🎓 Student</button><button data-role="admin" class="${!s ? 'on' : ''}">🛠 Admin</button></div>
+    <div class="seg"><button data-role="student" class="${s ? 'on' : ''}">${ic('cap', 16)} Student</button><button data-role="admin" class="${!s ? 'on' : ''}">${ic('gear', 16)} Admin</button></div>
   <form id="af" autocomplete="on">
   ${reg ? '<label>Full name</label><input name="name" required maxlength="60">' : ''}
   <label>${s ? 'PRN number' : 'Admin user ID'}</label><input name="login" required maxlength="20" autocomplete="username" placeholder="${s ? 'Enter your PRN number' : 'Enter your user ID'}">
